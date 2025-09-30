@@ -1,59 +1,73 @@
-# 📈 BrokerTEC  
+# React + TypeScript + Vite
 
-**BrokerTEC** es un entorno educativo para practicar decisiones de compra y venta de acciones en mercados simulados.  
-Todo funciona en **USD** y está diseñado para que estudiantes y entusiastas puedan aprender sobre la dinámica bursátil en un entorno seguro.  
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
----
+Currently, two official plugins are available:
 
-## 🌐 Descripción general  
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-- Cada empresa cuenta con **precio de acción (actual e histórico)**, **cantidad de acciones** y **capitalización de mercado**.  
-- El inventario lo administra la **Tesorería** (cuenta sistémica). Si no hay acciones disponibles, no se compra.  
-- Los usuarios asumen distintos **roles**:  
-  - 👨‍💼 **Admin**: gestiona mercados, empresas, precios y usuarios.  
-  - 🧑‍💻 **Trader**: opera con un wallet en USD y un límite diario de recarga según su categoría (junior/mid/senior).  
-  - 📊 **Analista**: observa reportes y estadísticas por alias (sin PII).  
+## React Compiler
 
----
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-## 🎮 Acciones principales  
+## Expanding the ESLint configuration
 
-- **Trader**  
-  - Comprar/Vender acciones al precio actual.  
-  - Recargar wallet (respetando límite diario).  
-  - Liquidar todo (con confirmación de contraseña).  
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
 
-- **Admin**  
-  - CRUD de Mercados y Empresas.  
-  - Cargar y actualizar precios (actuales e históricos).  
-  - Gestionar usuarios y categorías (crear, deshabilitar con justificación, delistar empresas).  
+```js
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
 
-- **Analista**  
-  - Consultar reportes por empresa y alias.  
-  - Visualizar inventario de Tesorería y estadísticas de tenencia.  
+      // Remove tseslint.configs.recommended and replace with this
+      tseslint.configs.recommendedTypeChecked,
+      // Alternatively, use this for stricter rules
+      tseslint.configs.strictTypeChecked,
+      // Optionally, add this for stylistic rules
+      tseslint.configs.stylisticTypeChecked,
 
----
+      // Other configs...
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```
 
-## 📊 Gráficos permitidos  
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
-1. Precio de la acción vs. tiempo (línea simple).  
-2. Top empresas por capitalización (barras horizontales).  
-3. Top traders por dinero en wallet y por valor en acciones (barras horizontales).  
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
 
----
-
-## 🛠️ Tecnologías  
-
-- **Backend** → Node.js (API REST).  
-- **Frontend** → React (interfaz web responsive).  
-- **Base de datos** → Microsoft SQL Server.  
-- **Gráficos** → librerías open source (línea y barras).  
-
----
-
-## ⚙️ Ejecución local  
-
-1. Clonar el repositorio:  
-   ```bash
-   git clone https://github.com/tuusuario/brokertec.git
-   cd brokertec
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+      // Enable lint rules for React
+      reactX.configs['recommended-typescript'],
+      // Enable lint rules for React DOM
+      reactDom.configs.recommended,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```
