@@ -1,0 +1,20 @@
+{
+    "sqltools.connections": [
+        {
+            "mysqlOptions": {
+                "authProtocol": "xprotocol",
+                "enableSsl": "Disabled"
+            },
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 33060,
+            "driver": "MySQL",
+            "name": "Tablas",
+            "username": "root",
+            "password": "2172000jos",
+            "connectionTimeout": 30,
+            "database": "BrokerTEC"
+        }
+    ]
+}
