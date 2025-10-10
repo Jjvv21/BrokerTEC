@@ -166,3 +166,34 @@ CONSTRAINT chk_cantidad CHECK (cantidad >= 0),
 CONSTRAINT chk_costo CHECK (costo_promedio >= 0),
 CONSTRAINT uq_portafolio_usuario_empresa UNIQUE (id_usuario, id_empresa)
 );
+
+-- Tabla para auditoría de cambios
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[audit_log]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [dbo].[audit_log] (
+        id_log INT IDENTITY(1,1) PRIMARY KEY,
+        tabla_afectada VARCHAR(100) NOT NULL,  -- Aumentado a 100 para nombres de tablas largos
+        id_registro INT NULL,  -- Cambiado a NULL para casos donde no hay ID específico
+        accion VARCHAR(20) NOT NULL,  -- INSERT, UPDATE, DELETE
+        usuario_modificador VARCHAR(128),  -- Aumentado para SUSER_NAME() completo
+        fecha_modificacion DATETIME2 DEFAULT SYSDATETIME(),  -- Mayor precisión
+        descripcion VARCHAR(MAX),  -- Cambiado de TEXT a VARCHAR(MAX)
+        detalles_anteriores VARCHAR(MAX),  -- Nuevo: para almacenar valores anteriores
+        detalles_nuevos VARCHAR(MAX),  -- Nuevo: para almacenar valores nuevos
+        ip_origen VARCHAR(45),  -- Nuevo: para auditoría de seguridad
+        CONSTRAINT chk_accion CHECK (accion IN ('INSERT', 'UPDATE', 'DELETE'))
+    );
+
+    -- Índices para mejorar el rendimiento de consultas
+    CREATE INDEX IX_audit_log_tabla_fecha ON [dbo].[audit_log] (tabla_afectada, fecha_modificacion DESC);
+    CREATE INDEX IX_audit_log_fecha ON [dbo].[audit_log] (fecha_modificacion DESC);
+    CREATE INDEX IX_audit_log_usuario ON [dbo].[audit_log] (usuario_modificador, fecha_modificacion DESC);
+    CREATE INDEX IX_audit_log_registro ON [dbo].[audit_log] (tabla_afectada, id_registro);
+    
+    PRINT 'Tabla audit_log creada exitosamente';
+END
+ELSE
+BEGIN
+    PRINT 'La tabla audit_log ya existe';
+END;
+GO
