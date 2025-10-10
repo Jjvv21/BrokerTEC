@@ -1,0 +1,1 @@
+SELECT FN_GetMaxBuyableShares(1, 1) AS max_shares;
