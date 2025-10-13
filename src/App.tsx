@@ -4,13 +4,12 @@ import viteLogo from '/vite.svg'
 import './App.css'
 
 function App() {
-
   return (
-      <h1 className="text-3xl font-bold underline text-blue-500">
-          Hello Tailwind!
-      </h1>
-
-  )
+    <div className="p-10 bg-gray-900 text-white text-3xl font-bold">
+      ✅ TailwindCSS funcionando
+    </div>
+  );
 }
 
-export default App
+export default App;
+

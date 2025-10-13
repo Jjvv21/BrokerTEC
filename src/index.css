@@ -1,3 +1,4 @@
+@source "../src";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
