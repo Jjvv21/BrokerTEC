@@ -1,25 +1,45 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
+import Login from "../features/auth/Login";
 import TraderHome from "../pages/trader/Home";
 import AdminHome from "../pages/admin/Home";
 import AnalistaHome from "../pages/analista/Home";
-
-function Root() {
-    return (
-        <div className="p-4">
-            <h1 className="text-xl font-bold">Bienvenido a BrokerTEC</h1>
-            <p>Elige tu rol:</p>
-            <ul>
-                <li><a href="/trader">Trader</a></li>
-                <li><a href="/admin">Admin</a></li>
-                <li><a href="/analista">Analista</a></li>
-            </ul>
-        </div>
-    );
-}
+import Profile from "../features/profile/Profile";
+import RequireRole from "./RequireRole";
 
 export const router = createBrowserRouter([
-    { path: "/", element: <Root /> },
-    { path: "/trader", element: <TraderHome /> },
-    { path: "/admin", element: <AdminHome /> },
-    { path: "/analista", element: <AnalistaHome /> },
+  // Login explícito
+  { path: "/login", element: <Login /> },
+
+  // Raíz redirige a /login (opcional pero recomendado)
+  { path: "/", element: <Navigate to="/login" replace /> },
+
+  { path: "/perfil", element: <Profile /> },
+
+  {
+    path: "/trader",
+    element: (
+      <RequireRole rol="Trader">
+        <TraderHome />
+      </RequireRole>
+    ),
+  },
+  {
+    path: "/admin",
+    element: (
+      <RequireRole rol="Admin">
+        <AdminHome />
+      </RequireRole>
+    ),
+  },
+  {
+    path: "/analista",
+    element: (
+      <RequireRole rol="Analista">
+        <AnalistaHome />
+      </RequireRole>
+    ),
+  },
+
+  // Catch-all → login
+  { path: "*", element: <Navigate to="/login" replace /> },
 ]);

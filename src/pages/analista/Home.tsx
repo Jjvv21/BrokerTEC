@@ -1,10 +1,14 @@
-function AnalistaHome() {
-    return (
-        <div className="p-4">
-            <h1 className="text-2xl font-bold text-purple-600">Analista Home</h1>
-            <p>Bienvenido al panel del Analista 📊</p>
-        </div>
-    );
-}
+import Navbar from "../../components/Navbar";
+import styles from "./AnalistaHome.module.css";
 
-export default AnalistaHome;
+export default function AnalistaHome() {
+  return (
+    <>
+      <Navbar />
+      <div className={styles.container}>
+        <h1>Panel del Analista</h1>
+        <p>Visualización de datos, gráficos y reportes.</p>
+      </div>
+    </>
+  );
+}

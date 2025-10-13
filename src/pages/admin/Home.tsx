@@ -1,10 +1,14 @@
-function AdminHome() {
-    return (
-        <div className="p-4">
-            <h1 className="text-2xl font-bold text-green-600">Admin Home</h1>
-            <p>Bienvenido al panel del Admin 🛠️</p>
-        </div>
-    );
-}
+import Navbar from "../../components/Navbar";
+import styles from "./AdminHome.module.css";
 
-export default AdminHome;
+export default function AdminHome() {
+  return (
+    <>
+      <Navbar />
+      <div className={styles.container}>
+        <h1>Panel del Administrador</h1>
+        <p>Gestión de usuarios, empresas y mercados.</p>
+      </div>
+    </>
+  );
+}
