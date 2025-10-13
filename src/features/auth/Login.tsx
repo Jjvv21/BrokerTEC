@@ -1,41 +1,63 @@
-// src/features/auth/Login.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "./useAuth";
+import styles from "./Login.module.css";
+import { usuariosMock } from "../../services/mock";
 
 export default function Login() {
-  const [alias, setAlias] = useState("");
+  const [usuario, setUsuario] = useState("");
+  const [contrasena, setContrasena] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
-  const { login } = useAuth();
 
-  function handleSubmit(e: React.FormEvent) {
+  // Si ya hay sesión, redirigir automáticamente
+  useEffect(() => {
+    const savedUser = localStorage.getItem("usuario");
+    if (savedUser) {
+      const user = JSON.parse(savedUser);
+      navigate(`/${user.rol.toLowerCase()}`);
+    }
+  }, [navigate]);
+
+  function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    const ok = login(alias);
-    if (ok) {
-      const user = JSON.parse(localStorage.getItem("usuario")!);
-      navigate(`/${user.rol.toLowerCase()}`); // ej: /trader, /admin, /analista
+    setError("");
+
+    // Buscar coincidencia
+    const user = usuariosMock.find(
+      (u) =>
+        u.usuario.toLowerCase() === usuario.toLowerCase() &&
+        u.contrasena === contrasena
+    );
+
+    if (user) {
+      localStorage.setItem("usuario", JSON.stringify(user));
+      navigate(`/${user.rol.toLowerCase()}`);
     } else {
-      alert("Alias no encontrado");
+      setError("Usuario o contraseña incorrectos.");
     }
   }
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen">
-      <h1 className="text-2xl font-bold mb-4">BrokerTEC - Login</h1>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+    <div className={styles.container}>
+      <h1>Iniciar sesión</h1>
+
+      <form className={styles.form} onSubmit={handleLogin}>
         <input
-          value={alias}
-          onChange={(e) => setAlias(e.target.value)}
-          placeholder="Alias"
-          className="border p-2 rounded"
+          type="text"
+          placeholder="Usuario"
+          value={usuario}
+          onChange={(e) => setUsuario(e.target.value)}
         />
-        <button
-          type="submit"
-          className="bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
-        >
-          Entrar
-        </button>
+        <input
+          type="password"
+          placeholder="Contraseña"
+          value={contrasena}
+          onChange={(e) => setContrasena(e.target.value)}
+        />
+        <button type="submit">Entrar</button>
       </form>
+
+      {error && <p className={styles.error}>{error}</p>}
     </div>
   );
 }
