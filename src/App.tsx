@@ -1,15 +1,18 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { mockEmpresas } from "./services/mock";
 
 function App() {
   return (
-    <div className="p-10 bg-gray-900 text-white text-3xl font-bold">
-      ✅ TailwindCSS funcionando
+    <div className="p-4">
+      <h1 className="text-2xl font-bold underline">Empresas Mock</h1>
+      <ul>
+        {mockEmpresas.map((e) => (
+          <li key={e.id}>
+            {e.nombre} - ${e.precioActual}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
 
 export default App;
-
