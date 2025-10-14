@@ -43,7 +43,7 @@ export default function UsuarioReportes() {
             <h2 className="text-lg font-semibold text-gray-700 mb-2 text-center">
               Transacciones de {aliasSeleccionado}
             </h2>
-            <table className="min-w-full border-collapse">
+            <table className="min-w-full text-sm md:tect-base border-collapse">
               <thead>
               <tr className="bg-gray-200 text-gray-700">
                 <th className="px-4 py-2 text-left">Empresa</th>

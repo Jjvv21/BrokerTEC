@@ -2,6 +2,15 @@ import { useEffect, useState } from "react";
 import type { Empresa } from "../../models/types";
 import { getTopEmpresasPorCapitalizacion } from "../../services/mock";
 import { useNavigate } from "react-router-dom";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 export default function TraderHome() {
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
@@ -10,6 +19,12 @@ export default function TraderHome() {
   useEffect(() => {
     setEmpresas(getTopEmpresasPorCapitalizacion());
   }, []);
+
+  // Convertir datos para el gráfico
+  const dataGrafico = empresas.map((e) => ({
+    nombre: e.nombre,
+    capitalizacion: e.precioActual * e.cantidadTotal,
+  }));
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center py-10">
@@ -22,7 +37,7 @@ export default function TraderHome() {
           Aquí puedes ver las empresas con mayor capitalización de mercado.
         </p>
 
-        {/* ===== Botones de navegación ===== */}
+        {/* ===== Botones ===== */}
         <div className="flex justify-center gap-4 mb-8">
           <button
             onClick={() => navigate("/trader/wallet")}
@@ -39,7 +54,32 @@ export default function TraderHome() {
           </button>
         </div>
 
-        {/* ===== Tabla de empresas ===== */}
+        {/* ===== Gráfico ===== */}
+        {dataGrafico.length > 0 && (
+          <div className="h-64 mb-10">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={dataGrafico}
+                layout="vertical"
+                margin={{ top: 10, right: 30, left: 50, bottom: 10 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis
+                  type="number"
+                  tickFormatter={(v) => `$${(v / 1_000_000).toFixed(1)}M`}
+                />
+                <YAxis type="category" dataKey="nombre" width={100} />
+                <Tooltip
+                  formatter={(v: number) => `$${v.toLocaleString()}`}
+                  labelStyle={{ fontWeight: "bold" }}
+                />
+                <Bar dataKey="capitalizacion" fill="#2563eb" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
+        {/* ===== Tabla ===== */}
         <div className="overflow-x-auto">
           <table className="min-w-full table-auto border-collapse">
             <thead>
@@ -54,14 +94,9 @@ export default function TraderHome() {
             </thead>
             <tbody>
             {empresas.map((e, i) => (
-              <tr
-                key={e.id}
-                className="border-b hover:bg-gray-50 transition-all"
-              >
+              <tr key={e.id} className="border-b hover:bg-gray-50 transition-all">
                 <td className="px-4 py-2">{i + 1}</td>
-                <td className="px-4 py-2 font-medium text-blue-700">
-                  {e.nombre}
-                </td>
+                <td className="px-4 py-2 font-medium text-blue-700">{e.nombre}</td>
                 <td className="px-4 py-2">{e.mercadoId}</td>
                 <td className="px-4 py-2 text-right">${e.precioActual}</td>
                 <td className="px-4 py-2 text-right">
@@ -80,12 +115,6 @@ export default function TraderHome() {
             </tbody>
           </table>
         </div>
-
-        {empresas.length === 0 && (
-          <p className="text-gray-500 text-center mt-6">
-            No hay datos disponibles.
-          </p>
-        )}
       </div>
     </div>
   );

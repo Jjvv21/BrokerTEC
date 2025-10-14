@@ -43,7 +43,7 @@ export default function Portafolio() {
         ) : (
           <>
             <div className="overflow-x-auto mb-6">
-              <table className="min-w-full table-auto border-collapse">
+              <table className="min-w-full text-sm md:tect-base border-collapse">
                 <thead>
                 <tr className="bg-gray-200 text-gray-700">
                   <th className="px-4 py-2 text-left">Empresa</th>

@@ -17,7 +17,7 @@ import Precios from "../pages/admin/Precios";
 import EmpresaReportes from "../pages/analista/EmpresaReportes";
 import UsuarioReportes from "../pages/analista/UsuarioReportes";
 import Estadisticas from "../pages/analista/Estadisticas";
-
+import TopTraders from "../pages/admin/TopTraders";
 
 export const router = createBrowserRouter([
   // 🔹 Página de login
@@ -121,6 +121,16 @@ export const router = createBrowserRouter([
           </RequireRole>
         ),
       },
+
+      {
+        path: "/admin/top-traders",
+        element: (
+          <RequireRole rol="Admin">
+            <TopTraders />
+          </RequireRole>
+        ),
+      },
+
 
 
       {

@@ -28,7 +28,7 @@ export default function Precios() {
         )}
 
         <div className="overflow-x-auto">
-          <table className="min-w-full border-collapse">
+          <table className="min-w-full text-sm md:tect-base border-collapse">
             <thead>
             <tr className="bg-gray-200 text-gray-700">
               <th className="px-4 py-2 text-left">Empresa</th>

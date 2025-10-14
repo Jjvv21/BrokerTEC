@@ -22,6 +22,14 @@ export default function AdminHome() {
           </button>
 
           <button
+            onClick={() => navigate("/admin/top-traders")}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium shadow-sm transition-all"
+          >
+            Top Traders
+          </button>
+
+
+          <button
             onClick={() => navigate("/admin/empresas")}
             className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium shadow-sm transition-all"
           >
