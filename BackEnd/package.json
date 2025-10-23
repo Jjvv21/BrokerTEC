@@ -1,0 +1,16 @@
+{
+  "name": "brokertec-backend",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "Backend for BrokerTEC project",
+  "main": "test-db.js",
+  "scripts": {
+    "dev": "node test-db.js",
+    "start": "node test-db.js"
+  },
+  "dependencies": {
+    "mssql": "^9.0.0",
+    "tedious": "^16.0.0",
+    "dotenv": "^16.0.0"
+  }
+}
