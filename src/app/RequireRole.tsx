@@ -1,5 +1,5 @@
 import { Navigate } from "react-router-dom";
-import { ReactNode } from "react";
+import type { ReactNode } from "react"; // ← Agregar 'type'
 
 interface RequireRoleProps {
   rol: string; // el rol esperado
@@ -15,10 +15,14 @@ export default function RequireRole({ rol, children }: RequireRoleProps) {
     return <Navigate to="/login" replace />;
   }
 
+  // ✅ CONVERTIR rolId A STRING
+  const userRole = user.rolId === 1 ? 'admin' : 
+                   user.rolId === 2 ? 'trader' : 'analyst';
+
   // 🔹 Si el usuario no tiene el rol requerido
-  if (user.rol?.toLowerCase() !== rol.toLowerCase()) {
-    // Redirige al home de su propio rol (no se bloquea el acceso total)
-    return <Navigate to={`/${user.rol.toLowerCase()}`} replace />;
+  if (userRole !== rol.toLowerCase()) {
+    // Redirige al home de su propio rol
+    return <Navigate to={`/${userRole}`} replace />;
   }
 
   // 🔹 Si pasa las validaciones, renderiza el contenido
