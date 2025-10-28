@@ -10,7 +10,8 @@ export class User {
     this.telefono = userData.telefono;
     this.direccion = userData.direccion;
     this.paisDeOrigen = userData.pais_de_origen;
-    this.passwordHash = userData.password_hash;
+
+    this.passwordHash = userData.contrasena_hash || userData.password_hash;
     this.lastAccess = userData.last_access;
   }
 

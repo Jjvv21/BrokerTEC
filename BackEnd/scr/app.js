@@ -1,11 +1,19 @@
+import express from 'express';
+import cors from 'cors';
+import routes from './routes/index.js'; // ← QUITAR /src
+import { errorHandler, notFoundHandler } from './middlewares/error.middleware.js'; // ← QUITAR /src
 
-import { AuthService, TraderService } from './scr/services/index.js';
+const app = express();
 
-// Probar flujo completo
-const authService = new AuthService();
-const user = await authService.getUserById(2); // trader01
-console.log('Usuario:', user.alias);
+// Middlewares
+app.use(cors());
+app.use(express.json());
 
-const traderService = new TraderService();
-const portfolio = await traderService.getPortfolio(2);
-console.log('Portafolio:', portfolio);
+// Routes
+app.use('/api', routes);
+
+// Manejo de errores
+app.use(notFoundHandler);
+app.use(errorHandler);
+
+export default app;

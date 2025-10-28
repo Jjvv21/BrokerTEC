@@ -1,11 +1,41 @@
-import express from 'express';
-import * as TraderController from '../controllers/trader.controller.js';
-import { verifyJWT } from '../middlewares/auth.middleware.js';
+import { Router } from 'express';
+import { 
+  buyStock, 
+  sellStock, 
+  getMaxBuyable, 
+  rechargeWallet, 
+  getWalletInfo, 
+  getPortfolio, 
+  liquidateAll, 
+  getHomeData, 
+  getCompanyDetail, 
+  getPriceHistory 
+} from '../controllers/trader.controller.js';
+import { authenticateToken } from '../middlewares/auth.middleware.js'; // ← SOLO authenticateToken
+import { requireTrader } from '../middlewares/role.middleware.js'; // ← requireTrader desde role.middleware
+import { validateTrade, validateRecharge } from '../middlewares/validate.middleware.js';
 
-const router = express.Router();
+const router = Router();
 
-router.post('/buy', verifyJWT, TraderController.buyStock);
-router.post('/sell', verifyJWT, TraderController.sellStock);
-router.get('/positions/:userId', verifyJWT, TraderController.getPositions);
+// Todas las rutas requieren autenticación y rol Trader
+router.use(authenticateToken, requireTrader);
+
+// Operaciones de trading
+router.post('/buy', validateTrade, buyStock);
+router.post('/sell', validateTrade, sellStock);
+router.get('/max-buyable/:companyId', getMaxBuyable);
+
+// Wallet y portfolio
+router.post('/recharge', validateRecharge, rechargeWallet);
+router.get('/wallet', getWalletInfo);
+router.get('/portfolio', getPortfolio);
+
+// Liquidación
+router.post('/liquidate', liquidateAll);
+
+// Datos de mercado
+router.get('/home', getHomeData);
+router.get('/company/:companyId', getCompanyDetail);
+router.get('/price-history/:companyId', getPriceHistory);
 
 export default router;
