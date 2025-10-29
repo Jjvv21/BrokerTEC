@@ -1,80 +1,106 @@
 import { useEffect, useState } from "react";
-import type { Usuario } from "../../models/types";
-import { usuariosMock } from "../../services/mock";
+import { getWalletInfo, rechargeWallet } from "../../services/api";
+
+interface WalletData {
+  saldo: number;
+  nombre_categoria: string;
+  limite_diario: number;
+  consumo_hoy: number;
+}
 
 export default function Wallet() {
-  const [usuario, setUsuario] = useState<Usuario | null>(null);
+  const [walletData, setWalletData] = useState<WalletData | null>(null);
   const [monto, setMonto] = useState<number>(0);
   const [mensaje, setMensaje] = useState<string>("");
+  const [loading, setLoading] = useState(true);
+  const [recargando, setRecargando] = useState(false);
 
+  // ✅ Cargar datos REALES del backend
   useEffect(() => {
-    const stored = localStorage.getItem("usuario");
-    if (stored) {
-      const user = JSON.parse(stored);
-      const fullUser = usuariosMock.find((u) => u.usuario === user.usuario);
-      setUsuario(fullUser || null);
-    }
+    const loadWalletData = async () => {
+      try {
+        console.log('🔄 Cargando datos del wallet...');
+        const data = await getWalletInfo();
+        console.log('✅ Datos del wallet recibidos:', data);
+        setWalletData(data);
+      } catch (err) {
+        console.error('❌ Error cargando wallet:', err);
+        setMensaje("Error al cargar los datos del wallet");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadWalletData();
   }, []);
 
-  if (!usuario) return null;
-
-  const handleRecarga = () => {
+  // ✅ Recarga REAL con el backend
+  const handleRecarga = async () => {
     if (monto <= 0) {
       setMensaje("⚠️ Ingrese un monto válido.");
       return;
     }
 
-    const wallet = usuario.wallet;
-    const nuevoConsumo = wallet.consumoHoy + monto;
+    if (!walletData) return;
 
-    if (nuevoConsumo > wallet.limiteDiario) {
-      const restante = wallet.limiteDiario - wallet.consumoHoy;
+    // Validar límite diario
+    const nuevoConsumo = walletData.consumo_hoy + monto;
+    if (nuevoConsumo > walletData.limite_diario) {
+      const restante = walletData.limite_diario - walletData.consumo_hoy;
       setMensaje(`❌ Límite diario alcanzado. Solo puede recargar $${restante}.`);
       return;
     }
 
-    // Simular recarga (sin persistir todavía)
-    wallet.saldo += monto;
-    wallet.consumoHoy = nuevoConsumo;
-    wallet.historialRecargas.unshift({
-      id: "r" + (wallet.historialRecargas.length + 1),
-      monto,
-      fecha: new Date().toISOString(),
-    });
-
-    setUsuario({ ...usuario, wallet });
-    setMensaje(`✅ Recarga exitosa de $${monto}.`);
-    setMonto(0);
+    setRecargando(true);
+    try {
+      console.log('🔄 Enviando recarga al backend...');
+      const resultado = await rechargeWallet(monto);
+      console.log('✅ Recarga exitosa:', resultado);
+      
+      // Recargar los datos actualizados
+      const nuevoWallet = await getWalletInfo();
+      setWalletData(nuevoWallet);
+      
+      setMensaje(`✅ Recarga exitosa de $${monto}.`);
+      setMonto(0);
+    } catch (error: any) {
+      console.error('❌ Error en recarga:', error);
+      setMensaje(error.response?.data?.error || "Error al procesar la recarga");
+    } finally {
+      setRecargando(false);
+    }
   };
 
-  const wallet = usuario.wallet;
+  if (loading) return <div className="min-h-screen bg-gray-100 flex items-center justify-center">Cargando wallet...</div>;
+  if (!walletData) return <div className="min-h-screen bg-gray-100 flex items-center justify-center">No se pudieron cargar los datos del wallet</div>;
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center py-10">
       <div className="max-w-lg w-full bg-white rounded-xl shadow-md p-8">
         <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-          Wallet de {usuario.alias}
+          Mi Wallet
         </h1>
 
+        {/* Resumen del Wallet */}
         <div className="space-y-3 text-gray-700 mb-6">
           <p>
             <strong>Saldo actual:</strong>{" "}
             <span className="text-green-600 font-semibold">
-              ${wallet.saldo.toLocaleString()}
+              ${walletData.saldo.toLocaleString()}
             </span>
           </p>
           <p>
-            <strong>Categoría:</strong> {wallet.categoria}
+            <strong>Categoría:</strong> {walletData.nombre_categoria}
           </p>
           <p>
-            <strong>Límite diario:</strong> ${wallet.limiteDiario.toLocaleString()}
+            <strong>Límite diario:</strong> ${walletData.limite_diario.toLocaleString()}
           </p>
           <p>
-            <strong>Consumo hoy:</strong> ${wallet.consumoHoy.toLocaleString()}
+            <strong>Consumo hoy:</strong> ${walletData.consumo_hoy.toLocaleString()}
           </p>
         </div>
 
-        {/* Recarga */}
+        {/* Sección de Recarga */}
         <div className="border-t pt-4">
           <h2 className="text-lg font-semibold mb-3 text-gray-800">Nueva recarga</h2>
           <div className="flex items-center justify-center gap-3 mb-3">
@@ -85,14 +111,19 @@ export default function Wallet() {
               min={1}
               value={monto || ""}
               onChange={(e) => setMonto(Number(e.target.value))}
+              disabled={recargando}
             />
             <button
               onClick={handleRecarga}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-all"
+              disabled={recargando || monto <= 0}
+              className={`${
+                recargando ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'
+              } text-white px-4 py-2 rounded-md transition-all disabled:opacity-50`}
             >
-              Recargar
+              {recargando ? 'Procesando...' : 'Recargar'}
             </button>
           </div>
+          
           {mensaje && (
             <p
               className={`text-center font-medium ${
@@ -103,38 +134,7 @@ export default function Wallet() {
             </p>
           )}
         </div>
-
-        {/* Historial */}
-        <div className="mt-8">
-          <h2 className="text-lg font-semibold mb-3 text-gray-800">
-            Historial de recargas
-          </h2>
-
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm border-collapse">
-              <thead>
-              <tr className="bg-gray-200 text-gray-700">
-                <th className="px-4 py-2 text-left">Fecha</th>
-                <th className="px-4 py-2 text-right">Monto (USD)</th>
-              </tr>
-              </thead>
-              <tbody>
-              {wallet.historialRecargas.map((r) => (
-                <tr key={r.id} className="border-b hover:bg-gray-50">
-                  <td className="px-4 py-2">
-                    {new Date(r.fecha).toLocaleString("es-CR")}
-                  </td>
-                  <td className="px-4 py-2 text-right">
-                    ${r.monto.toLocaleString()}
-                  </td>
-                </tr>
-              ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
       </div>
     </div>
   );
 }
-

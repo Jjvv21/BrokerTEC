@@ -5,7 +5,7 @@ const PORT = process.env.PORT || 3001;
 
 getConnection()
   .then(() => {
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Servidor BrokerTEC corriendo en puerto ${PORT}`);
       console.log(`📊 API disponible en: http://localhost:${PORT}/api`);
     });

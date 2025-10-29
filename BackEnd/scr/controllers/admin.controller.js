@@ -56,7 +56,8 @@ export const delistCompany = async (req, res) => {
   try {
     const { companyId } = req.params;
     const { justification } = req.body;
-    const result = await AdminService.delistCompany(companyId, justification);
+    const adminId = req.user.userId; // ✅ AGREGADO - ID del admin que ejecuta
+    const result = await AdminService.delistCompany(companyId, justification, adminId);
     res.status(200).json(result);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -78,7 +79,8 @@ export const disableUser = async (req, res) => {
   try {
     const { userId } = req.params;
     const { justification } = req.body;
-    const result = await AdminService.disableUser(userId, justification);
+    const adminId = req.user.userId; // ✅ AGREGADO - ID del admin que ejecuta
+    const result = await AdminService.disableUser(userId, justification, adminId);
     res.status(200).json(result);
   } catch (err) {
     res.status(400).json({ error: err.message });
