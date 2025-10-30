@@ -1,5 +1,5 @@
-import { getConnection } from '../config/db.js';
-import sql from 'mssql';
+import { getConnection, sql } from '../config/db.js';
+
 import { Trade, Position } from '../models/index.js';
 import { logger } from '../config/logger.js';
 
@@ -352,39 +352,60 @@ async getWalletInfo(userId) {
    * Obtiene el portafolio de un trader
    */
   async getPortfolio(userId) {
-  try {
-    const pool = await getConnection();
-    
-    // ✅ CONSULTA TEMPORAL SIMPLE
-    const result = await pool.request()
-      .input('userId', userId)
-      .query('SELECT * FROM portafolio WHERE id_usuario = @userId');
-    
-    // ✅ DATOS TEMPORALES - para que el frontend funcione
-    const portfolioData = {
-      positions: result.recordset.map(item => ({
-        id_empresa: item.id_empresa,
-        empresa_nombre: `Empresa ${item.id_empresa}`, // Temporal
-        mercado_nombre: 'NYSE', // Temporal
-        cantidad: item.cantidad,
-        costo_promedio: item.costo_promedio,
-        precio_actual: 100.00, // Temporal
-        valor_actual: item.cantidad * 100.00, // Temporal
-        costo_total: item.cantidad * item.costo_promedio
-      })),
-      wallet: 50000.00, // Temporal
-      totalPortfolio: result.recordset.reduce((sum, item) => sum + (item.cantidad * 100.00), 0),
-      totalValue: 50000.00 + result.recordset.reduce((sum, item) => sum + (item.cantidad * 100.00), 0)
-    };
-    
-    console.log('✅ Portfolio data temporal:', portfolioData);
-    return portfolioData;
-    
-  } catch (error) {
-    logger.error('Error obteniendo portafolio', error);
-    throw error;
+    try {
+      const pool = await getConnection();
+
+      // Obtener portafolio del usuario con datos reales
+      const result = await pool.request()
+        .input('userId', userId)
+        .query(`
+        SELECT 
+          p.id_empresa,
+          e.nombre AS empresa_nombre,
+          m.nombre AS mercado_nombre,
+          p.cantidad,
+          p.costo_promedio,
+          e.precio_actual,
+          (p.cantidad * e.precio_actual) AS valor_actual,
+          (p.cantidad * p.costo_promedio) AS costo_total
+        FROM portafolio p
+        JOIN empresa e ON p.id_empresa = e.id_empresa
+        JOIN mercado m ON e.id_mercado = m.id_mercado
+        WHERE p.id_usuario = @userId
+      `);
+
+      // Obtener saldo actual del wallet (NO el límite)
+      const walletResult = await pool.request()
+        .input('userId', userId)
+        .query(`
+        SELECT w.saldo
+        FROM wallet w
+        WHERE w.id_usuario = @userId
+      `);
+
+      const wallet = walletResult.recordset[0]?.saldo || 0;
+
+      // Calcular totales
+      const totalPortfolio = result.recordset.reduce((sum, item) => sum + item.valor_actual, 0);
+      const totalValue = wallet + totalPortfolio;
+
+      const portfolioData = {
+        positions: result.recordset,
+        wallet,
+        totalPortfolio,
+        totalValue
+      };
+
+      console.log(" Portfolio real obtenido:", portfolioData);
+      return portfolioData;
+
+    } catch (error) {
+      console.error(" Error obteniendo portafolio real:", error);
+      throw error;
+    }
   }
-}
+
+
 
   /**
    * Liquidación total de posiciones
@@ -475,81 +496,47 @@ async getWalletInfo(userId) {
   }
 
   async getHomeData(userId) {
-  try {
-    const pool = await getConnection();
-    
-    const topCompaniesResult = await pool.request()
-      .query(`
-        SELECT TOP 5 
-          e.id_empresa, 
-          e.nombre, 
-          -- e.simbolo,  ❌ REMOVER
-          e.precio_actual, 
+    try {
+      const pool = await getConnection();
+
+      // ✅ Consulta limpia y funcional según tu tabla empresa
+      const result = await pool.request().query(`
+        SELECT
+          e.id_empresa,
+          e.nombre,
+          e.precio_actual,
           e.cantidad_acciones,
-          e.market_cap as capitalizacion,
-          m.nombre as mercado_nombre,
-          (SELECT TOP 1 precio FROM historico_precio
-           WHERE id_empresa = e.id_empresa 
-           ORDER BY fecha DESC) as precio_anterior
+          (e.precio_actual * e.cantidad_acciones) AS capitalizacion,
+          m.nombre AS mercado_nombre
         FROM empresa e
-        JOIN mercado m ON e.id_mercado = m.id_mercado
-        WHERE e.activo = 1 AND m.estado = 'habilitado'
-        ORDER BY capitalizacion DESC
+               JOIN mercado m ON e.id_mercado = m.id_mercado
+        WHERE e.activo = 1
+        ORDER BY capitalizacion DESC;
       `);
-    
-    // ✅ Agregar simbolo temporal a cada empresa
-    const empresasConSimbolo = topCompaniesResult.recordset.map(empresa => ({
-      ...empresa,
-      simbolo: empresa.nombre.substring(0, 4).toUpperCase() // Temporal
-    }));
-    
-    console.log('✅ Top empresas obtenidas:', empresasConSimbolo);
-    
-    const walletInfo = await this.getWalletInfo(userId);
-    
-    return {
-      topCompanies: empresasConSimbolo,
-      wallet: walletInfo,
-      lastUpdate: new Date().toISOString()
-    };
-    
-  } catch (error) {
-    console.error('❌ Error en getHomeData:', error);
-    
-    const walletInfo = await this.getWalletInfo(userId);
-    
-    return {
-      topCompanies: [
-        {
-          id_empresa: 1,
-          nombre: "Apple Inc.",
-          simbolo: "AAPL", // Temporal
-          precio_actual: 150.00,
-          cantidad_acciones: 1000000,
-          capitalizacion: 150000000,
-          mercado_nombre: "NASDAQ"
-        },
-        {
-          id_empresa: 2,
-          nombre: "Microsoft Corp.",
-          simbolo: "MSFT", // Temporal
-          precio_actual: 300.00,
-          cantidad_acciones: 500000,
-          capitalizacion: 150000000,
-          mercado_nombre: "NASDAQ"
-        }
-      ],
-      wallet: walletInfo,
-      lastUpdate: new Date().toISOString()
-    };
+
+      const empresas = result.recordset;
+      console.log(' Top empresas obtenidas:', empresas);
+
+      const walletInfo = await this.getWalletInfo(userId);
+
+      return {
+        topCompanies: empresas,
+        wallet: walletInfo,
+        lastUpdate: new Date().toISOString()
+      };
+    } catch (error) {
+      console.error(' Error real en getHomeData:', error);
+      throw error; // 👈 sin mocks ni datos falsos
+    }
   }
-}
+
+
 
   async getCompanyDetail(companyId) {
   try {
     const pool = await getConnection();
     
-    // ✅ Parsear el ID
+    //  Parsear el ID
     let parsedId = companyId;
     if (typeof companyId === 'string' && companyId.startsWith('E')) {
       parsedId = parseInt(companyId.substring(1));
@@ -563,7 +550,7 @@ async getWalletInfo(userId) {
         SELECT 
           e.id_empresa,
           e.nombre,
-          -- e.simbolo,  ❌ REMOVER - esta columna no existe
+
           e.precio_actual,
           e.cantidad_acciones,
           e.market_cap as capitalizacion,

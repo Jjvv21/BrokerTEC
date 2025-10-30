@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Empresa } from "../../models/types";
-import { getTopEmpresasPorCapitalizacion } from "../../services/mock";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import {
   BarChart,
@@ -13,18 +12,44 @@ import {
 } from "recharts";
 
 export default function TraderHome() {
-  const [empresas, setEmpresas] = useState<Empresa[]>([]);
+  const [empresas, setEmpresas] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  const fetchEmpresas = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+      const res = await axios.get("http://localhost:3001/api/trader/home", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      console.log("📊 Datos recibidos del backend:", res.data);
+      // Asegurarse de que el array venga del backend
+      setEmpresas(res.data?.topCompanies || []);
+    } catch (err) {
+      console.error("❌ Error al obtener empresas:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    setEmpresas(getTopEmpresasPorCapitalizacion());
+    fetchEmpresas();
   }, []);
 
-  // Convertir datos para el gráfico
+  // Crear los datos del gráfico
   const dataGrafico = empresas.map((e) => ({
     nombre: e.nombre,
-    capitalizacion: e.precioActual * e.cantidadTotal,
+    capitalizacion: e.capitalizacion || e.precio_actual * e.cantidad_acciones,
   }));
+
+  if (loading) {
+    return (
+      <p className="text-center mt-10 text-gray-600">
+        Cargando datos de empresas...
+      </p>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center py-10">
@@ -73,7 +98,11 @@ export default function TraderHome() {
                   formatter={(v: number) => `$${v.toLocaleString()}`}
                   labelStyle={{ fontWeight: "bold" }}
                 />
-                <Bar dataKey="capitalizacion" fill="#2563eb" radius={[4, 4, 0, 0]} />
+                <Bar
+                  dataKey="capitalizacion"
+                  fill="#2563eb"
+                  radius={[4, 4, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -93,25 +122,40 @@ export default function TraderHome() {
             </tr>
             </thead>
             <tbody>
-            {empresas.map((e, i) => (
-              <tr key={e.id} className="border-b hover:bg-gray-50 transition-all">
-                <td className="px-4 py-2">{i + 1}</td>
-                <td className="px-4 py-2 font-medium text-blue-700">{e.nombre}</td>
-                <td className="px-4 py-2">{e.mercadoId}</td>
-                <td className="px-4 py-2 text-right">${e.precioActual}</td>
-                <td className="px-4 py-2 text-right">
-                  ${(e.precioActual * e.cantidadTotal).toLocaleString()}
-                </td>
-                <td className="px-4 py-2 text-center">
-                  <button
-                    onClick={() => navigate(`/trader/empresa/${e.id}`)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-1.5 rounded-md transition-all"
-                  >
-                    Ver detalles
-                  </button>
+            {empresas.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="text-center py-6 text-gray-500">
+                  No hay empresas disponibles.
                 </td>
               </tr>
-            ))}
+            ) : (
+              empresas.map((e, i) => (
+                <tr
+                  key={e.id_empresa}
+                  className="border-b hover:bg-gray-50 transition-all"
+                >
+                  <td className="px-4 py-2">{i + 1}</td>
+                  <td className="px-4 py-2 font-medium text-blue-700">
+                    {e.nombre}
+                  </td>
+                  <td className="px-4 py-2">{e.mercado_nombre || "N/A"}</td>
+                  <td className="px-4 py-2 text-right">
+                    ${e.precio_actual?.toFixed(2)}
+                  </td>
+                  <td className="px-4 py-2 text-right">
+                    ${(e.capitalizacion || 0).toLocaleString()}
+                  </td>
+                  <td className="px-4 py-2 text-center">
+                    <button
+                      onClick={() => navigate(`/trader/empresa/${e.id_empresa}`)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-1.5 rounded-md transition-all"
+                    >
+                      Ver detalles
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
             </tbody>
           </table>
         </div>

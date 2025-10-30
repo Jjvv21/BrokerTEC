@@ -57,25 +57,44 @@ export const updateCompany = async (req, res) => {
 export const delistCompany = async (req, res) => {
   try {
     const { companyId } = req.params;
-    const { justification } = req.body;
-    const adminId = req.user.userId; //  AGREGADO - ID del admin que ejecuta
-    const result = await AdminService.delistCompany(companyId, justification, adminId);
-    res.status(200).json(result);
+    const { justificacion, precio_fijo } = req.body;
+    const idAdmin = req.user.id; // viene del token
+
+    const pool = await getConnection();
+    const result = await pool.request()
+      .input("id_empresa", sql.Int, companyId)
+      .input("justificacion", sql.VarChar(sql.MAX), justificacion)
+      .input("precio_fijo", sql.Decimal(18, 4), precio_fijo || null)
+      .input("id_admin", sql.Int, idAdmin)
+      .execute("SP_DelistarEmpresa");
+
+    res.status(200).json({ message: result.recordset[0].Mensaje });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    console.error(" Error al delistar empresa:", err);
+    res.status(500).json({ message: "Error al delistar empresa." });
   }
 };
+
+
 
 export const updateStockPrice = async (req, res) => {
   try {
     const { companyId } = req.params;
-    const { newPrice } = req.body;
-    const result = await AdminService.updateStockPrice(companyId, newPrice);
-    res.status(200).json(result);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
+    const { nuevo_precio } = req.body;
+
+    const pool = await getConnection();
+    const result = await pool.request()
+      .input("id_empresa", sql.Int, companyId)
+      .input("nuevo_precio", sql.Decimal(18, 4), nuevo_precio)
+      .execute("SP_ActualizarPrecio");
+
+    res.status(200).json({ message: result.recordset[0].Mensaje });
+  } catch (error) {
+    console.error("❌ Error al actualizar precio:", error);
+    res.status(500).json({ message: "Error al actualizar precio." });
   }
 };
+
 
 export const disableUser = async (req, res) => {
   try {
@@ -118,11 +137,6 @@ export const getTopTraders = async (req, res) => {
   }
 };
 
-(async () => {
-  const pool = await getConnection();
-  const result = await pool.request().query("SELECT * FROM FN_ObtenerTopTradersPorWallet(5)");
-  console.log("✅ Test directa a SQL:", result.recordset);
-})();
 
 
 
@@ -196,3 +210,19 @@ export const toggleUserStatus = async (req, res) => {
   }
 };
 
+export const getAllCompanies = async (req, res) => {
+  try {
+    const pool = await getConnection();
+    const result = await pool.request().query(`
+      SELECT e.id_empresa, e.nombre, m.nombre AS mercado, 
+             e.precio_actual, e.cantidad_acciones AS inventario
+      FROM empresa e
+      INNER JOIN mercado m ON e.id_mercado = m.id_mercado
+      WHERE e.activo = 1;
+    `);
+    res.status(200).json(result.recordset);
+  } catch (error) {
+    console.error("Error al obtener empresas:", error);
+    res.status(500).json({ message: "Error al obtener empresas." });
+  }
+};
