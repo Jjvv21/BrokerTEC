@@ -7,7 +7,7 @@ const config = {
   server: process.env.DB_SERVER || 'localhost',
   database: process.env.DB_NAME || 'BrokerTEC',
   user: process.env.DB_USER || 'sa',
-  password: process.env.DB_PASSWORD || 'mo1751652', //sus contraseñas del usuario sa del SERVER
+  password: process.env.DB_PASSWORD || 'ejemplo', //sus contraseñas del usuario sa del SERVER
   options: {
     encrypt: false,
     trustServerCertificate: true

@@ -164,10 +164,7 @@ BEGIN
 END;
 GO
 
--- 2. Procedimiento para deshabilitar usuario
-IF OBJECT_ID('SP_DeshabilitarUsuario', 'P') IS NOT NULL
-    DROP PROCEDURE SP_DeshabilitarUsuario;
-GO
+
 
 
 
@@ -888,15 +885,3 @@ END;
 GO
 
 
-EXEC SP_DeshabilitarUsuario
-    @id_usuario = 2,
-    @justificacion = 'Deshabilitado por prueba manual',
-    @id_admin = 1;
-
--- Cerrar y liberar el cursor manualmente (si quedó abierto)
-IF CURSOR_STATUS('global', 'cur') >= -1
-BEGIN
-    CLOSE cur;
-    DEALLOCATE cur;
-END
-SELECT id_usuario, id_rol, nombre FROM usuario WHERE id_usuario = 1;

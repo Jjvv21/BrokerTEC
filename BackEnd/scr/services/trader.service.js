@@ -292,7 +292,7 @@ async rechargeWallet(userId, amount) {
     
     const newBalance = newBalanceResult.recordset[0].saldo;
     
-    console.log('✅ Recarga exitosa:', { 
+    console.log(' Recarga exitosa:', {
       userId, 
       walletId, 
       amount, 
@@ -309,7 +309,7 @@ async rechargeWallet(userId, amount) {
     };
     
   } catch (error) {
-    console.error('❌ Error en recarga:', error);
+    console.error(' Error en recarga:', error);
     throw error;
   }
 }
@@ -318,35 +318,49 @@ async rechargeWallet(userId, amount) {
    */
   /**
  */
-async getWalletInfo(userId) {
-  try {
-    const pool = await getConnection();
-    
-    // ✅ CONSULTA TEMPORAL SIMPLE - sin joins complejos
-    const result = await pool.request()
-      .input('userId', userId)
-      .query('SELECT saldo FROM wallet WHERE id_usuario = @userId');
-    
-    if (result.recordset.length === 0) {
-      throw new Error('Wallet no encontrado');
+  async getWalletInfo(userId) {
+    try {
+      const pool = await getConnection();
+
+      const result = await pool.request()
+        .input('userId', userId)
+        .query(`
+          SELECT
+            w.saldo,
+            c.nombre_categoria,
+            c.limite_diario,
+            COALESCE((
+                       SELECT SUM(r.monto)
+                       FROM recarga r
+                       WHERE r.id_wallet = w.id_wallet
+                         AND CAST(r.fecha AS DATE) = CAST(GETDATE() AS DATE)
+                     ), 0) AS consumo_hoy
+          FROM wallet w
+                 JOIN usuario u ON w.id_usuario = u.id_usuario
+                 JOIN categoria c ON u.id_categoria = c.id_categoria
+          WHERE w.id_usuario = @userId
+        `);
+
+      if (result.recordset.length === 0) {
+        throw new Error('Wallet no encontrado');
+      }
+
+      const data = result.recordset[0];
+
+      return {
+        saldo: data.saldo,
+        nombre_categoria: data.nombre_categoria,
+        limite_diario: data.limite_diario,
+        consumo_hoy: data.consumo_hoy
+      };
+
+    } catch (error) {
+      console.error(' Error obteniendo info real del wallet:', error);
+      throw error;
     }
-    
-    // ✅ DATOS TEMPORALES - para que el frontend funcione
-    const walletData = {
-      saldo: result.recordset[0].saldo,
-      nombre_categoria: 'Mid', // Temporal
-      limite_diario: 50000.00, // Temporal
-      consumo_hoy: 0.00 // Temporal
-    };
-    
-    console.log('✅ Wallet data temporal:', walletData);
-    return walletData;
-    
-  } catch (error) {
-    logger.error('Error obteniendo info del wallet', error);
-    throw error;
   }
-}
+
+
 
   /**
    * Obtiene el portafolio de un trader
