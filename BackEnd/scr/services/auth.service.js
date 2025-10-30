@@ -23,17 +23,16 @@ export class AuthService {
       
       const userData = result.recordset[0];
       
-      // ❌ PROBLEMA 1: La columna se llama password_hash, no contrasena_hash
-      // ❌ PROBLEMA 2: Los passwords están en texto plano, no hasheados
+
       
-      // ✅ SOLUCIÓN TEMPORAL: Comparar con texto plano
+
       if (password !== userData.password_hash) {
         throw new Error('Contraseña incorrecta');
       }
       
       const user = new User(userData);
       
-      // ✅ CORREGIR: userId y roleId (no role)
+
       const token = jwt.sign(
         { userId: user.id, roleId: user.rolId }, 
         process.env.JWT_SECRET || 'brokertec_secret_key', 
@@ -67,7 +66,7 @@ export class AuthService {
         throw new Error('El correo o alias ya están en uso');
       }
       
-      // ✅ CORREGIR: Usar password_hash (no contrasena_hash)
+
       const result = await pool.request()
         .input('nombre', nombre)
         .input('alias', alias)

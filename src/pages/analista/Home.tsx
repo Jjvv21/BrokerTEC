@@ -16,21 +16,21 @@ export default function AnalistaHome() {
 
         <div className="flex justify-center flex-wrap gap-6">
           <button
-            onClick={() => navigate("/analista/empresa")}
+            onClick={() => navigate("/analyst/empresa")}
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium shadow-sm transition-all"
           >
             Reportes por Empresa
           </button>
 
           <button
-            onClick={() => navigate("/analista/usuario")}
+            onClick={() => navigate("/analyst/usuario")}
             className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium shadow-sm transition-all"
           >
             Reportes por Usuario
           </button>
 
           <button
-            onClick={() => navigate("/analista/estadisticas")}
+            onClick={() => navigate("/analyst/estadisticas")}
             className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium shadow-sm transition-all"
           >
             Estadísticas Globales

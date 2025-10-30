@@ -1,8 +1,43 @@
-import { useState } from "react";
-import { usuariosMock } from "../../services/mock";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
 export default function Usuarios() {
-  const [usuarios, setUsuarios] = useState(usuariosMock);
+  const [usuarios, setUsuarios] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchUsuarios = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+      const res = await axios.get("http://localhost:3001/api/admin/users", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setUsuarios(res.data);
+    } catch (err) {
+      console.error("Error cargando usuarios:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleEstado = async (id: number) => {
+    try {
+      const token = localStorage.getItem("authToken");
+      await axios.put(`http://localhost:3001/api/admin/users/${id}/toggle`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchUsuarios(); // refresca la lista
+    } catch (err) {
+      console.error("Error cambiando estado:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsuarios();
+  }, []);
+
+  if (loading) {
+    return <p className="text-center mt-10 text-gray-600">Cargando usuarios...</p>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center py-10">
@@ -12,7 +47,7 @@ export default function Usuarios() {
         </h1>
 
         <div className="overflow-x-auto">
-          <table className="min-w-full text-sm md:tect-base border-collapse">
+          <table className="min-w-full text-sm border-collapse">
             <thead>
             <tr className="bg-gray-200 text-gray-700">
               <th className="px-4 py-2 text-left">Usuario</th>
@@ -39,6 +74,7 @@ export default function Usuarios() {
                 </td>
                 <td className="px-4 py-2 text-center">
                   <button
+                    onClick={() => toggleEstado(u.id)}
                     className={`${
                       u.estado === "activo"
                         ? "bg-red-600 hover:bg-red-700"

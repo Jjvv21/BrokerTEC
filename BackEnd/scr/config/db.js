@@ -7,7 +7,7 @@ const config = {
   server: process.env.DB_SERVER || 'localhost',
   database: process.env.DB_NAME || 'BrokerTEC',
   user: process.env.DB_USER || 'sa',
-  password: process.env.DB_PASSWORD || 'BrokerTEC123!', //sus contraseñas del usuario sa del SERVER
+  password: process.env.DB_PASSWORD || 'ejemplo', //sus contraseñas del usuario sa del SERVER
   options: {
     encrypt: false,
     trustServerCertificate: true
@@ -17,10 +17,10 @@ const config = {
 export async function getConnection() {
   try {
     const pool = await sql.connect(config);
-    console.log('✅ CONEXIÓN EXITOSA!');
+    console.log(' CONEXIÓN EXITOSA!');
     return pool;
   } catch (err) {
-    console.log('❌ Error:', err.message);
+    console.log(' Error:', err.message);
     throw err;
   }
 }

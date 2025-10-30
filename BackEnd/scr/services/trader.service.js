@@ -20,7 +20,7 @@ export class TraderService {
       parsedCompanyId = parseInt(companyId.substring(1));
     }
     
-    console.log('🛒 Compra - ID parseado:', { original: companyId, parsed: parsedCompanyId, cantidad });
+    console.log(' Compra - ID parseado:', { original: companyId, parsed: parsedCompanyId, cantidad });
     
     // Obtener precio actual y mercado
     const companyResult = await transaction.request()
@@ -132,7 +132,7 @@ export class TraderService {
     
   } catch (error) {
     await transaction.rollback();
-    console.error('❌ Error en compra:', error);
+    console.error(' Error en compra:', error);
     throw error;
   }
 }
@@ -153,7 +153,7 @@ export class TraderService {
       parsedCompanyId = parseInt(companyId.substring(1));
     }
     
-    console.log('💰 Venta - ID parseado:', { original: companyId, parsed: parsedCompanyId, cantidad });
+    console.log(' Venta - ID parseado:', { original: companyId, parsed: parsedCompanyId, cantidad });
     
     // Verificar que tiene suficientes acciones
     const portfolioResult = await transaction.request()

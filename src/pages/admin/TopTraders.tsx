@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { usuariosMock } from "../../services/mock";
-import type { Usuario } from "../../models/types";
+import axios from "axios";
 import {
   BarChart,
   Bar,
@@ -13,35 +12,40 @@ import {
 } from "recharts";
 
 export default function TopTraders() {
-  const [data, setData] = useState<
-    { alias: string; wallet: number; acciones: number }[]
-  >([]);
+  const [data, setData] = useState<{ alias: string; wallet: number; acciones: number }[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchTopTraders = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+      const res = await axios.get("http://localhost:3001/api/admin/top-traders?top_n=5", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      console.log(" Datos recibidos del backend:", res.data);
+
+      const traders = res.data;
+      const formatted = traders.map((t: any) => ({
+        alias: t.alias,
+        wallet: t.saldo,
+        acciones: 0, // luego puedes cambiar por valor real si lo calculas
+      }));
+
+      setData(formatted);
+    } catch (err) {
+      console.error(" Error al cargar top traders:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // Filtrar solo usuarios tipo Trader
-    const traders = usuariosMock.filter((u) => u.rol === "Trader");
-
-    // Calcular saldo y valor total en portafolio
-    const procesados = traders.map((t) => {
-      const valorAcciones =
-        t.portafolio?.reduce(
-          (sum, p) => sum + p.precioActual * p.cantidad,
-          0
-        ) || 0;
-      return {
-        alias: t.alias,
-        wallet: t.wallet?.saldo || 0,
-        acciones: valorAcciones,
-      };
-    });
-
-    // Ordenar por mayor total (wallet + acciones)
-    procesados.sort(
-      (a, b) => b.wallet + b.acciones - (a.wallet + a.acciones)
-    );
-
-    setData(procesados.slice(0, 5)); // Solo los top 5
+    fetchTopTraders();
   }, []);
+
+  if (loading) {
+    return <p className="text-center mt-10 text-gray-600">Cargando Top Traders...</p>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center py-10">

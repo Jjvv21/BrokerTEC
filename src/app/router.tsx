@@ -131,36 +131,41 @@ export const router = createBrowserRouter([
         ),
       },
 
+      {
+        path: "*",
+        element: <Login /> // o una página 404 amigable
+      },
+
 
 
       {
-        path: "/analista",
+        path: "/analyst",
         element: (
-          <RequireRole rol="Analista">
+          <RequireRole rol="Analyst">
             <AnalistaHome />
           </RequireRole>
         ),
       },
       {
-        path: "/analista/empresa",
+        path: "/analyst/empresa",
         element: (
-          <RequireRole rol="Analista">
+          <RequireRole rol="Analyst">
             <EmpresaReportes />
           </RequireRole>
         ),
       },
       {
-        path: "/analista/usuario",
+        path: "/analyst/usuario",
         element: (
-          <RequireRole rol="Analista">
+          <RequireRole rol="Analyst">
             <UsuarioReportes />
           </RequireRole>
         ),
       },
       {
-        path: "/analista/estadisticas",
+        path: "/analyst/estadisticas",
         element: (
-          <RequireRole rol="Analista">
+          <RequireRole rol="Analyst">
             <Estadisticas />
           </RequireRole>
         ),

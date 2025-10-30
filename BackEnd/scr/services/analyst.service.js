@@ -137,46 +137,50 @@ export class AnalystService {
   async getUserReport(userAlias, startDate, endDate) {
     try {
       const pool = await getConnection();
-      
+
       let query = `
-        SELECT 
-          t.id_transaccion,
-          t.tipo,
-          t.cantidad,
-          t.precio,
-          t.total,
-          t.fecha,
-          e.nombre as empresa_nombre,
-          m.nombre as mercado_nombre
-        FROM transaccion t
-        JOIN usuario u ON t.id_usuario = u.id_usuario
-        JOIN empresa e ON t.id_empresa = e.id_empresa
-        JOIN mercado m ON e.id_mercado = m.id_mercado
-        WHERE u.alias = @userAlias
-      `;
-      
+      SELECT 
+        t.id_tx AS id_transaccion,
+        t.tipo,
+        t.cantidad,
+        t.precio,
+        (t.cantidad * t.precio) AS total,
+        t.fecha,
+        e.nombre AS empresa_nombre,
+        m.nombre AS mercado_nombre
+      FROM transaccion t
+      JOIN usuario u ON t.id_usuario = u.id_usuario
+      JOIN empresa e ON t.id_empresa = e.id_empresa
+      JOIN mercado m ON e.id_mercado = m.id_mercado
+      WHERE u.alias = @userAlias
+    `;
+
       const request = pool.request().input('userAlias', userAlias);
-      
+
       if (startDate) {
         query += ' AND t.fecha >= @startDate';
         request.input('startDate', startDate);
       }
-      
+
       if (endDate) {
         query += ' AND t.fecha <= @endDate';
         request.input('endDate', endDate);
       }
-      
+
       query += ' ORDER BY t.fecha DESC';
-      
+
+      console.log(" Query ejecutado:", query, "con alias:", userAlias); //  log útil
       const result = await request.query(query);
+      console.log(" Resultado SQL:", result.recordset); //  log
       return result.recordset;
-      
+
     } catch (error) {
       logger.error('Error obteniendo reporte por usuario', error);
       throw error;
     }
   }
+
+
 
   /**
    * Obtiene estadísticas de mercado
@@ -325,3 +329,4 @@ export class AnalystService {
     }
   }
 }
+export const analystService = new AnalystService();

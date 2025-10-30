@@ -1,7 +1,7 @@
-import { getConnection } from '../config/db.js';
-import sql from 'mssql';
 import { User, Company } from '../models/index.js';
 import { logger } from '../config/logger.js';
+import { getConnection, sql } from '../config/db.js';
+
 
 export class AdminService {
   /**
@@ -487,3 +487,18 @@ export class AdminService {
     }
   }
 }
+export const getAllUsers = async () => {
+  const pool = await getConnection();
+  const result = await pool.request().query(`
+    SELECT
+      u.id_usuario,
+      u.nombre,
+      u.alias,
+      u.correo,
+      r.nombre_rol AS rol,
+      u.estado
+    FROM usuario u
+           JOIN rol r ON u.id_rol = r.id_rol;
+  `);
+  return result.recordset;
+};

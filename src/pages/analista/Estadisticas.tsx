@@ -1,4 +1,5 @@
-import { usuariosMock, empresasMock } from "../../services/mock";
+import { useEffect, useState } from "react";
+import axios from "axios";
 import {
   PieChart,
   Pie,
@@ -9,19 +10,40 @@ import {
 } from "recharts";
 
 export default function Estadisticas() {
-  const totalUsuarios = usuariosMock.length;
-  const traders = usuariosMock.filter((u) => u.rol === "Trader").length;
-  const analistas = usuariosMock.filter((u) => u.rol === "Analista").length;
-  const admins = usuariosMock.filter((u) => u.rol === "Admin").length;
-  const totalEmpresas = empresasMock.length;
+  const [stats, setStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const dataRoles = [
-    { name: "Traders", value: traders },
-    { name: "Analistas", value: analistas },
-    { name: "Administradores", value: admins },
-  ];
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const token = localStorage.getItem("authToken");
+        const res = await axios.get("http://localhost:3001/api/analyst/global-stats", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setStats(res.data);
+      } catch (err) {
+        console.error("Error cargando estadísticas:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  if (loading) {
+    return <p className="text-center mt-10 text-gray-600">Cargando estadísticas...</p>;
+  }
+
+  if (!stats) {
+    return <p className="text-center mt-10 text-red-500">No se pudieron cargar las estadísticas.</p>;
+  }
 
   const COLORS = ["#2563eb", "#10b981", "#f59e0b"];
+  const dataRoles = stats.usuariosPorRol.map((r: any) => ({
+    name: r.rol,
+    value: r.cantidad,
+  }));
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center py-10">
@@ -29,12 +51,9 @@ export default function Estadisticas() {
         <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">
           Estadísticas Globales del Sistema
         </h1>
-        <p className="text-gray-600 mb-8 text-center">
-          Distribución de usuarios por rol y resumen general del ecosistema BrokerTEC.
-        </p>
 
-        {/* ====== Sección de gráfico ====== */}
         <div className="flex flex-col md:flex-row items-center justify-center gap-8 mb-10">
+          {/* ===== Gráfico ===== */}
           <div className="w-full md:w-1/2 h-72">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -42,7 +61,6 @@ export default function Estadisticas() {
                   data={dataRoles}
                   cx="50%"
                   cy="50%"
-                  labelLine={false}
                   outerRadius={90}
                   fill="#8884d8"
                   dataKey="value"
@@ -54,16 +72,13 @@ export default function Estadisticas() {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip
-                  formatter={(v: number) => `${v} usuarios`}
-                  labelStyle={{ fontWeight: "bold" }}
-                />
+                <Tooltip formatter={(v: number) => `${v} usuarios`} />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
           </div>
 
-          {/* ====== Tabla de resumen ====== */}
+          {/* ===== Tabla ===== */}
           <div className="w-full md:w-1/2">
             <table className="min-w-full border-collapse text-gray-700">
               <thead>
@@ -74,18 +89,18 @@ export default function Estadisticas() {
               </tr>
               </thead>
               <tbody>
-              {dataRoles.map((r, i) => (
+              {dataRoles.map((r: any, i: number) => (
                 <tr key={i} className="border-b hover:bg-gray-50">
                   <td className="px-4 py-2 font-medium">{r.name}</td>
                   <td className="px-4 py-2 text-right">{r.value}</td>
                   <td className="px-4 py-2 text-right">
-                    {((r.value / totalUsuarios) * 100).toFixed(1)}%
+                    {((r.value / stats.totalUsuarios) * 100).toFixed(1)}%
                   </td>
                 </tr>
               ))}
               <tr className="bg-gray-100 font-semibold">
                 <td className="px-4 py-2">Total de usuarios</td>
-                <td className="px-4 py-2 text-right">{totalUsuarios}</td>
+                <td className="px-4 py-2 text-right">{stats.totalUsuarios}</td>
                 <td className="px-4 py-2 text-right">100%</td>
               </tr>
               <tr>
@@ -93,7 +108,7 @@ export default function Estadisticas() {
                   Empresas registradas
                 </td>
                 <td className="px-4 py-2 text-right" colSpan={2}>
-                  {totalEmpresas}
+                  {stats.totalEmpresas}
                 </td>
               </tr>
               </tbody>
@@ -102,7 +117,7 @@ export default function Estadisticas() {
         </div>
 
         <p className="text-center text-gray-500 text-sm">
-          Datos generados a partir del entorno de pruebas (mock local).
+          Datos obtenidos directamente desde la base de datos.
         </p>
       </div>
     </div>

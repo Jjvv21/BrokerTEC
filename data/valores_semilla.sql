@@ -130,3 +130,20 @@ INSERT INTO [dbo].[evento_admin] (id_usuario, id_admin, tipo, justificacion, fec
 (2, 1, 'deshabilitar', 'Actividad sospechosa detectada', GETDATE()),
 (3, 1, 'delistar', 'Empresa removida por baja liquidez', GETDATE()),
 (4, 1, 'liquidar', 'Liquidación solicitada por el usuario', GETDATE());
+
+
+SELECT
+  t.id_tx AS id_transaccion,
+  t.tipo,
+  t.cantidad,
+  t.precio,
+  (t.cantidad * t.precio) AS total,
+  t.fecha,
+  e.nombre AS empresa_nombre,
+  m.nombre AS mercado_nombre
+FROM transaccion t
+JOIN usuario u ON t.id_usuario = u.id_usuario
+JOIN empresa e ON t.id_empresa = e.id_empresa
+JOIN mercado m ON e.id_mercado = m.id_mercado
+WHERE u.alias = 'trader01'
+ORDER BY t.fecha DESC;
