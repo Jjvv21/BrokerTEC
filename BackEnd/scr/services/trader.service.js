@@ -34,7 +34,7 @@ export class TraderService {
     const { precio_actual, id_mercado } = companyResult.recordset[0];
     const totalCost = precio_actual * cantidad;
     
-    console.log('💰 Costo total:', totalCost, 'Precio:', precio_actual);
+    console.log(' Costo total:', totalCost, 'Precio:', precio_actual);
     
     // Verificar saldo suficiente
     const walletResult = await transaction.request()
@@ -121,7 +121,7 @@ export class TraderService {
       `);
     
     await transaction.commit();
-    console.log('✅ Compra exitosa');
+    console.log(' Compra exitosa');
     
     return { 
       success: true, 
@@ -178,7 +178,7 @@ export class TraderService {
     const precio_actual = companyResult.recordset[0].precio_actual;
     const totalEarned = precio_actual * cantidad;
     
-    console.log('💵 Ganancia total:', totalEarned);
+    console.log(' Ganancia total:', totalEarned);
     
     // Actualizar wallet (sumar dinero)
     await transaction.request()
@@ -221,7 +221,7 @@ export class TraderService {
       `);
     
     await transaction.commit();
-    console.log('✅ Venta exitosa');
+    console.log(' Venta exitosa');
     
     return { 
       success: true, 
@@ -232,7 +232,7 @@ export class TraderService {
     
   } catch (error) {
     await transaction.rollback();
-    console.error('❌ Error en venta:', error);
+    console.error(' Error en venta:', error);
     throw error;
   }
 }
@@ -243,7 +243,7 @@ async rechargeWallet(userId, amount) {
   const pool = await getConnection();
   
   try {
-    console.log('🔄 Iniciando recarga para usuario:', userId, 'Monto:', amount);
+    console.log(' Iniciando recarga para usuario:', userId, 'Monto:', amount);
     
     // 1. Obtener el id_wallet del usuario
     const walletResult = await pool.request()
@@ -255,7 +255,7 @@ async rechargeWallet(userId, amount) {
     }
     
     const walletId = walletResult.recordset[0].id_wallet;
-    console.log('✅ Wallet ID encontrado:', walletId);
+    console.log(' Wallet ID encontrado:', walletId);
     
     // 2. Validar límite diario (versión simple)
     const dailyRechargesResult = await pool.request()
@@ -513,7 +513,7 @@ async rechargeWallet(userId, amount) {
     try {
       const pool = await getConnection();
 
-      // ✅ Consulta limpia y funcional según tu tabla empresa
+
       const result = await pool.request().query(`
         SELECT
           e.id_empresa,
@@ -540,7 +540,7 @@ async rechargeWallet(userId, amount) {
       };
     } catch (error) {
       console.error(' Error real en getHomeData:', error);
-      throw error; // 👈 sin mocks ni datos falsos
+      throw error;
     }
   }
 
@@ -556,7 +556,7 @@ async rechargeWallet(userId, amount) {
       parsedId = parseInt(companyId.substring(1));
     }
     
-    console.log('🔢 ID parseado:', { original: companyId, parsed: parsedId });
+    console.log(' ID parseado:', { original: companyId, parsed: parsedId });
     
     const result = await pool.request()
       .input('companyId', sql.Int, parsedId)
@@ -584,7 +584,7 @@ async rechargeWallet(userId, amount) {
       throw new Error(`Empresa con ID ${parsedId} no encontrada`);
     }
     
-    // ✅ Agregar simbolo temporal basado en el nombre
+    //  Agregar simbolo temporal basado en el nombre
     const empresaData = result.recordset[0];
     return {
       ...empresaData,
@@ -601,14 +601,14 @@ async getPriceHistory(companyId) {
   try {
     const pool = await getConnection();
     
-    // ✅ Mismo parseo para price history
+    //  Mismo parseo para price history
     let parsedId = companyId;
     if (typeof companyId === 'string' && companyId.startsWith('E')) {
       parsedId = parseInt(companyId.substring(1));
     }
     
     const result = await pool.request()
-      .input('companyId', sql.Int, parsedId)  // ✅ Usar sql.Int
+      .input('companyId', sql.Int, parsedId)  // Usar sql.Int
       .query(`
         SELECT precio, fecha
         FROM historico_precio
