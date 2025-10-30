@@ -11,9 +11,19 @@ export default function Navbar() {
     navigate("/login");
   }
 
-  function handleHomeRedirect() {
-    navigate(`/${user.rol.toLowerCase()}`);
+  function handleHomeRedirect(): void {
+    const roles: Record<number, string> = {
+      1: "admin",
+      2: "trader",
+      3: "analyst",
+      4: "user",
+    };
+
+    const rolePath = roles[user?.rolId ?? 4]; // 4 = user por defecto
+    navigate(`/${rolePath}`);
   }
+
+
 
   return (
     <nav className="flex justify-between items-center bg-gray-900 text-white px-8 py-3 shadow-md">

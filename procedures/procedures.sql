@@ -164,15 +164,15 @@ BEGIN
 END;
 GO
 
--- 2. Procedimiento para deshabilitar usuario
-IF OBJECT_ID('SP_DeshabilitarUsuario', 'P') IS NOT NULL
-    DROP PROCEDURE SP_DeshabilitarUsuario;
-GO
+
+
+
+
 
 CREATE PROCEDURE SP_DeshabilitarUsuario
     @id_usuario INT,
     @justificacion TEXT,
-    @id_admin INT
+    @id_admin INT = 1
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -228,8 +228,11 @@ BEGIN
         UPDATE usuario SET estado = 0 WHERE id_usuario = @id_usuario;
 
         -- Log
-        INSERT INTO evento_admin (id_usuario, id_admin, tipo, justificacion) 
-        VALUES (@id_usuario, @id_admin, 'deshabilitar', @justificacion);
+        -- Asegurar que id_admin no sea NULL
+        SET @id_admin = ISNULL(@id_admin, 1);
+
+        INSERT INTO evento_admin (id_usuario, id_admin, tipo, justificacion)
+        VALUES (@id_usuario, ISNULL(@id_admin,1), 'deshabilitar', @justificacion);
 
         COMMIT TRANSACTION;
         
@@ -238,9 +241,14 @@ BEGIN
     BEGIN CATCH
         IF @@TRANCOUNT > 0
             ROLLBACK TRANSACTION;
-            
-        THROW 50031, 'Error al deshabilitar usuario.', 1;
+
+        DECLARE @ErrorMsg NVARCHAR(4000) = ERROR_MESSAGE();
+        DECLARE @ErrorNum INT = ERROR_NUMBER();
+        DECLARE @ErrorLine INT = ERROR_LINE();
+
+        RAISERROR('Error al deshabilitar usuario. Detalle: %s | Línea: %d | Código: %d', 16, 1, @ErrorMsg, @ErrorLine, @ErrorNum);
     END CATCH
+
 END;
 GO
 
@@ -875,4 +883,5 @@ BEGIN
     END CATCH
 END;
 GO
+
 

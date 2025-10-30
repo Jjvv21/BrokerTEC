@@ -1,6 +1,5 @@
-import { useState } from "react";
-import { empresasMock, getPrecioSeries } from "../../services/mock";
-import type { PrecioHistorico } from "../../models/types";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import {
   LineChart,
   Line,
@@ -13,12 +12,42 @@ import {
 } from "recharts";
 
 export default function EmpresaReportes() {
-  const [empresaId, setEmpresaId] = useState<string>("");
-  const [historial, setHistorial] = useState<PrecioHistorico[]>([]);
+  const [empresas, setEmpresas] = useState([]);
+  const [empresaId, setEmpresaId] = useState("");
+  const [historial, setHistorial] = useState([]);
 
-  const handleSeleccion = (id: string) => {
+  // 🔹 Obtener token desde localStorage
+  const token = localStorage.getItem("authtoken");
+
+  // 🔹 Cargar empresas al iniciar
+  useEffect(() => {
+    axios
+      .get("http://localhost:3001/api/empresas", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("authtoken")}`,
+        },
+      })
+      .then((res) => setEmpresas(res.data))
+      .catch((err) => console.error("Error cargando empresas:", err));
+  }, [token]);
+
+  // 🔹 Al seleccionar una empresa, cargar su historial de precios
+  const handleSeleccion = async (id) => {
     setEmpresaId(id);
-    setHistorial(getPrecioSeries(id));
+    try {
+      const res = await axios.get(
+        `http://localhost:3001/api/empresas/${id}/precios`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authtoken")}`,
+          },
+        }
+      );
+      setHistorial(res.data);
+    } catch (err) {
+      console.error("Error cargando precios:", err);
+      setHistorial([]);
+    }
   };
 
   return (
@@ -31,7 +60,7 @@ export default function EmpresaReportes() {
           Selecciona una empresa para visualizar su historial de precios.
         </p>
 
-        {/* Selector de empresa */}
+        {/* 🔹 Selector de empresa */}
         <div className="flex justify-center mb-8">
           <select
             className="border border-gray-300 rounded-md px-4 py-2 w-72"
@@ -41,15 +70,15 @@ export default function EmpresaReportes() {
             <option value="" disabled>
               Selecciona una empresa
             </option>
-            {empresasMock.map((e) => (
-              <option key={e.id} value={e.id}>
+            {empresas.map((e) => (
+              <option key={e.id_empresa} value={e.id_empresa}>
                 {e.nombre}
               </option>
             ))}
           </select>
         </div>
 
-        {/* Gráfico */}
+        {/* 🔹 Gráfico */}
         {empresaId && historial.length > 0 ? (
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
@@ -66,16 +95,19 @@ export default function EmpresaReportes() {
                       month: "short",
                     })
                   }
-                  interval="preserveStartEnd"
                 />
                 <YAxis
                   domain={["auto", "auto"]}
-                  tickFormatter={(v) => `$${v}`}
+                  tickFormatter={(v) => `$${v.toFixed(2)}`}
                 />
                 <Tooltip
-                  formatter={(v: number) => `$${v.toFixed(2)}`}
+                  formatter={(v) => `$${v.toFixed(2)}`}
                   labelFormatter={(label) =>
-                    new Date(label).toLocaleDateString("es-CR")
+                    new Date(label).toLocaleDateString("es-CR", {
+                      day: "2-digit",
+                      month: "long",
+                      year: "numeric",
+                    })
                   }
                 />
                 <Legend />
@@ -83,9 +115,9 @@ export default function EmpresaReportes() {
                   type="monotone"
                   dataKey="precio"
                   stroke="#2563eb"
-                  strokeWidth={2}
-                  dot={{ r: 3 }}
-                  activeDot={{ r: 5 }}
+                  strokeWidth={3}
+                  dot={{ r: 4 }}
+                  activeDot={{ r: 6 }}
                   name="Precio (USD)"
                 />
               </LineChart>

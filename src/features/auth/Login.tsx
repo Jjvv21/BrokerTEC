@@ -1,36 +1,51 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { usuariosMock } from "../../services/mock";
+import { login } from "../../services/api"; // ← Cambiar por API real
 
 export default function Login() {
-  const [usuario, setUsuario] = useState("");
+  const [email, setEmail] = useState(""); // ← Cambiar usuario por email
   const [contrasena, setContrasena] = useState("");
   const [error, setError] = useState("");
+  const [cargando, setCargando] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const savedUser = localStorage.getItem("usuario");
-    if (savedUser) {
-      const user = JSON.parse(savedUser);
-      navigate(`/${user.rol.toLowerCase()}`);
-    }
-  }, [navigate]);
+useEffect(() => {
+  const savedUser = localStorage.getItem("usuario");
+  const savedToken = localStorage.getItem("authToken");
+  
+  if (savedUser && savedToken) {
+    const user = JSON.parse(savedUser);
+    
+    // ✅ CONVERTIR rolId A STRING
+    const role = user.rolId === 1 ? 'admin' : 
+                 user.rolId === 2 ? 'trader' : 'analyst';
+    
+    navigate(`/${role}`);
+  }
+}, [navigate]);
 
-  function handleLogin(e: React.FormEvent) {
+  async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    setCargando(true);
 
-    const user = usuariosMock.find(
-      (u) =>
-        u.usuario.toLowerCase() === usuario.toLowerCase() &&
-        u.contrasena === contrasena
-    );
-
-    if (user) {
-      localStorage.setItem("usuario", JSON.stringify(user));
-      navigate(`/${user.rol.toLowerCase()}`);
-    } else {
-      setError("Usuario o contraseña incorrectos.");
+    try {
+      // ✅ LLAMADA AL BACKEND REAL
+      const result = await login(email, contrasena);
+      
+      // Guardar token y usuario
+      localStorage.setItem("authToken", result.token);
+      localStorage.setItem("usuario", JSON.stringify(result.user));
+      
+      // Navegar según el rol (adaptar según tu backend)
+      const role = result.user.rolId === 1 ? 'admin' : 
+                   result.user.rolId === 2 ? 'trader' : 'analyst';
+      navigate(`/${role}`);
+      
+    } catch (err: any) {
+      setError(err.response?.data?.error || "Error de conexión");
+    } finally {
+      setCargando(false);
     }
   }
 
@@ -43,11 +58,12 @@ export default function Login() {
 
         <form onSubmit={handleLogin} className="flex flex-col gap-4">
           <input
-            type="text"
-            placeholder="Usuario"
+            type="email" // ← Cambiar a email
+            placeholder="Email" // ← Cambiar placeholder
             className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={usuario}
-            onChange={(e) => setUsuario(e.target.value)}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
           />
 
           <input
@@ -56,13 +72,15 @@ export default function Login() {
             className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={contrasena}
             onChange={(e) => setContrasena(e.target.value)}
+            required
           />
 
           <button
             type="submit"
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition-all"
+            disabled={cargando}
+            className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-2 rounded-lg transition-all"
           >
-            Entrar
+            {cargando ? "Iniciando sesión..." : "Entrar"}
           </button>
         </form>
 
@@ -71,6 +89,13 @@ export default function Login() {
             {error}
           </p>
         )}
+
+        {/* DATOS DE PRUEBA */}
+        <div className="mt-4 p-3 bg-gray-50 rounded-lg text-xs">
+          <p className="font-semibold">Datos de prueba:</p>
+          <p>Email: trader1@test.com</p>
+          <p>Contraseña: hash_trader1</p>
+        </div>
 
         <p className="text-gray-500 text-xs text-center mt-6">
           © 2025 BrokerTEC — Acceso restringido

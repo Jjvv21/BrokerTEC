@@ -667,3 +667,5 @@ SELECT * FROM dbo.FN_ObtenerTransaccionesUsuario('trader01', '2024-01-01', GETDA
 SELECT * FROM dbo.FN_ObtenerEstadisticasTenencia(1, 'empresa');
 SELECT * FROM dbo.FN_ObtenerEstadisticasTenencia(1, 'mercado');
 
+
+
